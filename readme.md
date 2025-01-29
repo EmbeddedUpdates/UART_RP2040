@@ -23,6 +23,7 @@ Or - we just call it like it is and say that the UART is both the L1 and L2.
     2. Layer 1 remains focused on hardware interfacing, avoiding unnecessary protocol logic.
 3. Flexibility for Future Enhancements:
     1. If you later need software flow control (e.g., XON/XOFF at Layer 2) or implement multi-drop UART protocols, these can be added cleanly at Layer 2 without modifying low-level hardware handling.
+
 ### Possible Implementation Strategy:
 1. Layer 1 Driver (Physical, TTL signaling)
     1. Configures UART registers (baud rate, TX/RX pins)
@@ -35,9 +36,13 @@ Or - we just call it like it is and say that the UART is both the L1 and L2.
     3. Supports software flow control if needed
     4. Passes valid data frames to Layer 3+
 
+## So what is this?
+
+This is an implementation of the SFR access with helper functions to make those accesses easier. A UART_dl module should act as the 'generic' OSI-L2 for this.
+The only user of this module should be UART_dl, unless a manual UART_Transmit() is acceptable for whatever testing is being performed.
 
 
-## old ramblings
+# old ramblings
 This module would act as an OSI-layer-1 module.
 
 It may be worth renaming this module to something like UART_OSI01_RP2040, this naming scheme describes the following:
