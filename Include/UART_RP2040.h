@@ -30,9 +30,6 @@
 /************************************************************
   ENUMS AND TYPEDEFS
 ************************************************************/
-#if defined( VIRTUAL_TARGET )
-volatile tRP2040_UART UART_Live;
-#endif /* !VIRTUAL_TARGET */
 
 /************************************************************
   EXTERN FUNCTIONS

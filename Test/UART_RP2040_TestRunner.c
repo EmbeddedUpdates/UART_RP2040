@@ -35,7 +35,10 @@ void resetTest(void)
   setUp();
 }
 
+
+volatile tRP2040_UART UART_Live;
 uint8 * mempool_start;
+
 /*=======MAIN=====*/
 int main(void)
 {
