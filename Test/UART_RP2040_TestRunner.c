@@ -21,9 +21,11 @@
 /*=======Automagically Detected Files To Include=====*/
 #include "unity.h"
 #include <setjmp.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include "UART_RP2040.h"
-#include "UART_RP2040_test.h"
+#include "UART_RP2040_Test.h"
+#include "MemPool.h"
 
 /*=======Test Reset Option=====*/
 void resetTest(void);
@@ -33,11 +35,31 @@ void resetTest(void)
   setUp();
 }
 
-
+uint8 * mempool_start;
 /*=======MAIN=====*/
 int main(void)
 {
-  UnityBegin("test/UART_RP2040.c");
+  UnityBegin("test/UART_RP2040_Tests.c");
+  uint8 * mempool = aligned_alloc(MEMPOOL_BLOCK_SIZE, MEMPOOL_SIZE);
+  mempool_start = mempool; 
+  printf("Address of mempool: %p\n", (void*)MEMPOOL_STARTADDR);
+  printf("Length of mempool: %p\n", (void*)(MEMPOOL_BLOCK_SIZE*MEMPOOL_MAX_NUM_BLOCKS));
+  MOCK_UART_INIT();
+
+  RUN_TEST(test_UART_InitSync_ReturnsOk, 34);
+  RUN_TEST(test_UART_InitSync_ReturnsNotOk_ConfigPointerNull, 41);
+  RUN_TEST(test_UART_InitSync_ReturnsNotOk_ConfigPointerIncompatible, 48);
+  RUN_TEST(test_UART_InitSync_ReturnsOk_IBRD_FBRD_Correct, 62);
+  RUN_TEST(test_UART_InitSync_ReturnsOk_LCR_CR_Correct, 71);
+  RUN_TEST(test_UART_TransferSync_ReturnsOK, 81);
+  RUN_TEST(test_UART_TransferSync_ReturnsOK_TxDataIsBuffered, 91);
+  RUN_TEST(test_UART_TransferSync_ReturnsNotOk_InputParamFailure_ZeroDataBytes, 102);
+  RUN_TEST(test_UART_TransferSync_ReturnsNotOk_InputParamFailure_NULLbuffer, 111);
+  RUN_TEST(test_UART_TransferSync_ReturnsBusy_TxFifoIsFull, 129);
+  RUN_TEST(test_UART_TransferSync_ReturnsOK_1Byte, 142);
+  RUN_TEST(test_UART_TransferSync_ReturnsOK_8Byte, 53);
+/*   RUN_TEST(test_UART_TransferSync_ReturnsOK_ReceptionIsConfirmed, 53); */
+  RUN_TEST(test_UART_TransferSync_ReturnsOK_TrasnferOneMillionMessages, 53);
 
   return (UnityEnd());
 }

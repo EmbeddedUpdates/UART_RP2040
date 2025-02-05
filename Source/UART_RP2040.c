@@ -38,31 +38,120 @@ extern void uart_send ( unsigned int x );
 #define IO_BANK0_GPIO25_CTRL_XOR    (IO_BANK0_BASE+0x0CC+0x1000)
 #define IO_BANK0_GPIO25_CTRL_SET    (IO_BANK0_BASE+0x0CC+0x2000)
 
-void UART_RP2040_InitSync ( void )
+/************************************************************
+  LOCAL VARIABLES
+************************************************************/
+#if defined ( VIRTUAL_TARGET )
+
+const tRP2040_UART UART_Uninit = { 0 };
+
+#endif /* VIRTUAL_TARGET */
+
+static Std_ComErrorCode UART_RP2040_TransferByte ( uint8 byte )
 {
-    // Reset_RP2040_ReleaseReset(kRESET_RESETS_IOBANK0);
-    Reset_RP2040_ReleaseReset(kRESET_RESETS_UART0);
+    Std_ComErrorCode retVal = E_COM_UNKNOWN;
+    uint8 timeout = 0xFF;
 
-    //GPIO 0 UART0 TX function 2
-    //GPIO 1 UART0 RX function 2
-
-    //(12000000/(16/115200)) = 6.514
-    //0.514*64 = 32.666
-    PUT32(UART0_BASE_UARTIBRD_RW,6);
-    PUT32(UART0_BASE_UARTFBRD_RW,33);
-    //0 11 1 0 0 0 0
-    //0111 0000
-    PUT32(UART0_BASE_UARTLCR_H_RW,0x70);
-    PUT32(UART0_BASE_UARTCR_RW,/*(1<<9)|*/(1<<8)|(1<<0));
-    PUT32(IO_BANK0_GPIO0_CTRL_RW,2);    //UART TX
-    //PUT32(IO_BANK0_GPIO1_CTRL_RW,2);  //UART RX
-}
-
-void UART_RP2040_TransferSync ( uint32 dataToTransfer )
-{
-    while(1)
+    /* consider that timeout could occur - we just loop through*/
+    while(0 != ((*UART_REG_UARTFR)&(1<<5)) && (0 < timeout))
     {
-        if((GET32(UART0_BASE_UARTFR_RW)&(1<<5))==0) break;
+        timeout--;
     }
-    PUT32(UART0_BASE_UARTDR_RW,dataToTransfer);
+
+    if(0 == timeout)
+    {
+        /* 
+            either a timeout has occured, or the fifo is full so we are busy.
+            busy makes more sense since FULL buffer indicates the bus is busy.
+        */
+        retVal = E_COM_BUSY;
+    }
+    else
+    {
+        /* FIFO has a slot, lets queue data to transmit */
+        *UART_REG_UARTDR = byte;
+        retVal = E_COM_OK;
+#if defined( VIRTUAL_TARGET )
+        UART_TRANSFERBYTE_CALLOUT();
+#endif /* VIRTUAL_TARGET */
+    }
+
+    return retVal;
 }
+
+Std_ComErrorCode UART_RP2040_InitSync ( UART_RP2040_Config * config )
+{
+    Std_ComErrorCode retVal = E_COM_OK;
+    if( NULL  == config )
+    {
+        retVal = E_COM_NOT_OK;
+    }
+
+    if( E_COM_OK == retVal )
+    {
+#if !defined( VIRTUAL_TARGET )
+    Reset_RP2040_ReleaseReset(kRESET_RESETS_UART0);
+#endif /* VIRTUAL_TARGET */
+
+    /* 
+        BRD = UARTCLK / (16 * BAUDRATE) = IBRD.FBRD
+            BRD = 12,000,000 / (16 * 115200)
+            BRD = 6.51041667
+        IBRD = 6
+        FBRD = 0.51041667 * 64 = 32.6666667 ~= 33
+    */
+
+    if( 115200 == config->baudrate )
+    {
+        if(12000000 == config->uartclk )
+        {
+            *UART_REG_UARTIBRD = 6;
+            *UART_REG_UARTFBRD = 33;
+        }
+        else
+        {
+            /* in the case of no matching uartclk configuration, report a generic failure */
+            retVal = E_COM_NOT_OK;
+        }
+    }
+    else
+    {
+        /* in the case of no matching uartclk configuration, report a generic failure */
+        retVal = E_COM_NOT_OK;
+    }
+
+    /* configure word length and fifo enable*/
+    *UART_REG_UARTLCR_H = config->lineControlRegVal;
+    /* Enable transmit and enable UART */
+    *UART_REG_UARTCR = ((1<<8)|(1<<0));
+
+#if !defined( VIRTUAL_TARGET )
+    PUT32(IO_BANK0_GPIO0_CTRL_RW,2);    //UART TX
+#endif /* !VIRTUAL_TARGET */
+    }
+    return retVal;
+}
+
+Std_ComErrorCode UART_RP2040_TransferSync ( uint8 * dataBuffer , uint8 length)
+{
+    Std_ComErrorCode retVal = E_COM_UNKNOWN;
+    uint8 timeout = 0xFF;
+    uint8 i;
+
+    if( (0 == length) || (NULL == dataBuffer) )
+    {
+        retVal = E_COM_NOT_OK;
+    }
+
+    /* No error has been detected so far - we can attempt transmission */
+    for(i = 0; i < length; i++)
+    {
+        if((E_COM_UNKNOWN == retVal) || (E_COM_OK == retVal))
+        {
+            retVal = UART_RP2040_TransferByte(dataBuffer[i]);
+        }
+    }
+
+    return retVal;
+}
+

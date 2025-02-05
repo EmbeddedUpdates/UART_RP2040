@@ -11,8 +11,8 @@
  * Change History
  * 01.13.2024 - Initial Creation
  */
-#ifndef UART_RP2040_H
-#define UART_RP2040_H
+#ifndef UART_RP2040_CFG_H
+#define UART_RP2040_CFG_H
 
 /************************************************************
   DEFINES
@@ -20,20 +20,29 @@
 /************************************************************
   INCLUDES
 ************************************************************/
-#if !defined( VIRTUAL_TARGET )
-#include "Reset_RP2040.h"
-#include "BRS_RP2040.h"
-#endif /* !VIRTUAL_TARGET */
-
-#include "ComStack_Types.h"
-#include "UART_RP2040_SFR.h"
-#include "UART_RP2040_cfg.h"
+#include "Platform_Types.h"
 /************************************************************
   ENUMS AND TYPEDEFS
 ************************************************************/
+typedef struct UART_RP2040_Config_tag
+{
+  uint32 baudrate;
+  uint32 uartclk;
+  uint8 lineControlRegVal;
+} UART_RP2040_Config;
+
+extern UART_RP2040_Config UART_RP2040_CFG;
+
+
 #if defined( VIRTUAL_TARGET )
-volatile tRP2040_UART UART_Live;
+#define UART_TRANSFERBYTE_CALLOUT MOCK_UART_PROCESS_UARTDR
+extern void UART_TRANSFERBYTE_CALLOUT(void);
 #endif /* !VIRTUAL_TARGET */
+
+#if defined( UART_TRANSFERBYTE_CALLOUT )
+extern void UART_TRANSFERBYTE_CALLOUT(void);
+#endif
+
 /************************************************************
   EXTERN FUNCTIONS
 ************************************************************/
@@ -42,14 +51,5 @@ volatile tRP2040_UART UART_Live;
   GLOBAL FUNCTIONS
 ************************************************************/
 
-/**
- * @brief Adds all module init functions to the OS Init lists
- * 
- * @note Should be the only place to call OS_ADDINIT()
- */
-extern Std_ComErrorCode UART_RP2040_InitSync( UART_RP2040_Config * config );
-
-extern Std_ComErrorCode UART_RP2040_TransferSync ( uint8 * buffer, uint8 length);
-
-#endif /* UART_RP2040_H */
+#endif /* UART_RP2040_CFG_H */
 
