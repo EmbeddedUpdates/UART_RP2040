@@ -1,22 +1,24 @@
-#include "UART_RP2040.h"
-extern void uart_send ( unsigned int x );
-#define RESETS_BASE                 0x4000C000
-
-#define RESETS_RESET_RW             (RESETS_BASE+0x0000)
-#define RESETS_RESET_XOR            (RESETS_BASE+0x1000)
-#define RESETS_RESET_SET            (RESETS_BASE+0x2000)
-#define RESETS_RESET_CLR            (RESETS_BASE+0x3000)
-
-#define RESETS_WDSEL_RW             (RESETS_BASE+0x4+0x0000)
-#define RESETS_WDSEL_XOR            (RESETS_BASE+0x4+0x1000)
-#define RESETS_WDSEL_SET            (RESETS_BASE+0x4+0x2000)
-#define RESETS_WDSEL_CLR            (RESETS_BASE+0x4+0x3000)
-
-#define RESETS_RESET_DONE_RW        (RESETS_BASE+0x8+0x0000)
-#define RESETS_RESET_DONE_XOR       (RESETS_BASE+0x8+0x1000)
-#define RESETS_RESET_DONE_SET       (RESETS_BASE+0x8+0x2000)
-#define RESETS_RESET_DONE_CLR       (RESETS_BASE+0x8+0x3000)
-
+/**
+ * 
+* @file "UART_RP2040.c"
+* @author Madrick3
+* @brief UART driver code for the UART peripheral on the RP2040. Acts as an OSI-L1 and OSI-L2 driver. The UART currently only 
+* 
+* @COMPONENT: TIMER_RP2040
+* @VERSION: 01.00.01 
+*/
+/************************************************************
+  Version History
+  -----------------------------------------------------------
+  Revision |  Author   |  Change ID      |  Description
+  01.00.00 |  Madrick3 |  SkeletonDraft  |  Initial Creation from code-template generator.
+  01.00.01 |  Madrick3 |  Transmit       |  Initial implementations of transmit and init code.
+                                                Use simple Mock implementation for transmit FIFO buffer.
+  01.00.02 |  Madrick3 |  Refactor       |  Refactor implementation so that it matches other EU drivers
+************************************************************/
+/************************************************************
+  DEFINES
+************************************************************/
 #define IO_BANK0_BASE               0x40014000
 
 #define IO_BANK0_GPIO0_CTRL_RW      (IO_BANK0_BASE+0x004+0x0000)
@@ -39,14 +41,20 @@ extern void uart_send ( unsigned int x );
 #define IO_BANK0_GPIO25_CTRL_SET    (IO_BANK0_BASE+0x0CC+0x2000)
 
 /************************************************************
+  INCLUDES
+************************************************************/
+#include "UART_RP2040.h"
+
+/************************************************************
   LOCAL VARIABLES
 ************************************************************/
 #if defined ( VIRTUAL_TARGET )
-
 const tRP2040_UART UART_Uninit = { 0 };
-
 #endif /* VIRTUAL_TARGET */
 
+/************************************************************
+  LOCAL FUNCTIONS
+************************************************************/
 static Std_ComErrorCode UART_RP2040_TransferByte ( uint8 byte )
 {
     Std_ComErrorCode retVal = E_COM_UNKNOWN;
@@ -79,6 +87,9 @@ static Std_ComErrorCode UART_RP2040_TransferByte ( uint8 byte )
     return retVal;
 }
 
+/************************************************************
+  GLOBAL FUNCTIONS
+************************************************************/
 Std_ComErrorCode UART_RP2040_InitSync ( UART_RP2040_Config * config )
 {
     Std_ComErrorCode retVal = E_COM_OK;
