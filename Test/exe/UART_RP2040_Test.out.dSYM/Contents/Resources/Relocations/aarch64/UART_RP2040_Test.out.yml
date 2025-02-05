@@ -1,5 +1,0 @@
----
-triple:          'arm64-apple-darwin'
-binary-path:     '../Test/exe/UART_RP2040_Test.out'
-relocations:     []
-...
