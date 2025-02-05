@@ -95,7 +95,7 @@ static Std_ComErrorCode UART_RP2040_TransferByte ( uint8 byte )
         /* FIFO has a slot, lets queue data to transmit */
         *UART_REG_UARTDR = byte;
         retVal = E_COM_OK;
-#if defined( VIRTUAL_TARGET )
+#if defined( UART_TRANSFERBYTE_CALLOUT )
         UART_TRANSFERBYTE_CALLOUT();
 #endif /* VIRTUAL_TARGET */
     }

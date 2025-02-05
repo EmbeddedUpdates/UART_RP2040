@@ -34,6 +34,9 @@ typedef struct UART_RP2040_Config_tag
 extern UART_RP2040_Config UART_RP2040_CFG;
 
 
+/************************************************************
+  EXTERN DATA
+************************************************************/
 #if defined( VIRTUAL_TARGET )
 #define UART_TRANSFERBYTE_CALLOUT MOCK_UART_PROCESS_UARTDR
 extern void UART_TRANSFERBYTE_CALLOUT(void);
