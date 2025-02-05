@@ -69,6 +69,7 @@ C_SOURCE_FILES += $(TEST_RUNNER) $(TESTS_FILE) $(SOURCE_FILES) $(UNITY_ROOT)/src
 TEST_EXE = $(ROOT_DIR)/Test/exe/$(MODULE_NAME)_Test.out
 
 INCLUDE_PATH += ../Include
+INCLUDE_PATH += ../Test
 INCLUDE_PATH += $(UNITY_ROOT)/src
 INCLUDE_PATH += $(ROOT_DIR)/../BRS_RP2040/include
 INCLUDE_PATH += $(ROOT_DIR)/../RingBuffer/include
