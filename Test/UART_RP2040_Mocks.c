@@ -82,7 +82,7 @@ uint8 MOCK_UART_PROCESS_TXFIFO(void)
   {
     txFifo.read(&txFifo, &readBuffer, 1);
     /*printf("Transmitted %x\n", readBuffer);*/
-    UART_Live.UARTFR &= !(1<<5);
+    UART_Live.UARTFR = UART_Live.UARTFR & ~(1<<5);
   }
   lastByteTransmitted = readBuffer;
   return lastByteTransmitted;

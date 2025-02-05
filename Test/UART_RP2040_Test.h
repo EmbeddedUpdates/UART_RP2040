@@ -53,10 +53,6 @@ extern void test_UART_TransferSync_ReturnsOK_8Byte(void);
 /* extern void test_UART_TransferSync_ReturnsOK_ReceptionIsConfirmed(void); */
 extern void test_UART_TransferSync_ReturnsOK_TrasnferOneMillionMessages(void);
 
-
-
-// extern void test_UART_Transfer_Receive_LoopbackMatches(void);
-
 /************************************************************
   LOCAL VARIABLES
 ************************************************************/

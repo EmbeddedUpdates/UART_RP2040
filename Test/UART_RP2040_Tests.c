@@ -34,21 +34,21 @@ void tearDown(void)
 /* HELPER FUNCTIONS */
 void test_UART_InitSync_ReturnsOk(void)
 {
-  Std_ErrorCode retVal = E_NOT_OK;
+  Std_ComErrorCode retVal = E_COM_NOT_OK;
   retVal = UART_RP2040_InitSync(&UART_RP2040_CFG);
-  TEST_ASSERT_EQUAL(E_OK, retVal);
+  TEST_ASSERT_EQUAL(E_COM_OK, retVal);
 }
 
 void test_UART_InitSync_ReturnsNotOk_ConfigPointerNull(void)
 {
-  Std_ErrorCode retVal = E_OK;
+  Std_ComErrorCode retVal = E_COM_OK;
   retVal = UART_RP2040_InitSync((UART_RP2040_Config *) NULL);
-  TEST_ASSERT_EQUAL(E_NOT_OK, retVal);
+  TEST_ASSERT_EQUAL(E_COM_NOT_OK, retVal);
 }
 
 void test_UART_InitSync_ReturnsNotOk_ConfigPointerIncompatible(void)
 {
-  Std_ErrorCode retVal = E_OK;
+  Std_ComErrorCode retVal = E_COM_OK;
   
   UART_RP2040_Config badUARTConfig =
   {
@@ -57,16 +57,16 @@ void test_UART_InitSync_ReturnsNotOk_ConfigPointerIncompatible(void)
     0x70
   };
   retVal = UART_RP2040_InitSync(&badUARTConfig);
-  TEST_ASSERT_EQUAL(E_NOT_OK, retVal);
+  TEST_ASSERT_EQUAL(E_COM_NOT_OK, retVal);
 }
 
 void test_UART_InitSync_ReturnsOk_IBRD_FBRD_Correct(void)
 {
-  Std_ErrorCode retVal = E_NOT_OK;
+  Std_ComErrorCode retVal = E_COM_NOT_OK;
   retVal = UART_RP2040_InitSync(&UART_RP2040_CFG);
   TEST_ASSERT_EQUAL(6, UART_Live.UARTIBRD);
   TEST_ASSERT_EQUAL(33, UART_Live.UARTFBRD);
-  TEST_ASSERT_EQUAL(E_OK, retVal);
+  TEST_ASSERT_EQUAL(E_COM_OK, retVal);
 }
 
 void test_UART_InitSync_ReturnsOk_LCR_CR_Correct(void)
@@ -121,7 +121,7 @@ void test_UART_TransferSync_ReturnsNotOk_InputParamFailure_NULLbuffer(void)
 void test_UART_TransferSync_ReturnsBusy_TxFifoIsFull(void)
 {
   Std_ComErrorCode retVal = E_COM_UNKNOWN;
-  int i;
+  uint8 i;
   uint8 buf[4] = {0xFA, 0xCE, 0xBE, 0xEF};
   retVal = UART_RP2040_InitSync(&UART_RP2040_CFG);
   for(i = 0; i < 32; i++)
@@ -171,15 +171,14 @@ void test_UART_TransferSync_ReturnsOK_8Byte(void)
 void test_UART_TransferSync_ReturnsOK_TrasnferOneMillionMessages(void)
 {
   Std_ComErrorCode retVal = E_COM_UNKNOWN;
-  uint8 buf[4] = {0xFA, 0xCE, 0xBE, 0xEF};
-  uint32 i = 0, j = 0;
+  uint16 i = 0, j = 0;
 
   retVal = UART_RP2040_InitSync(&UART_RP2040_CFG);
   for(j = 0; j < 10000; j++)
   {
     for(i = 0; i < 256; i++)
     {
-      retVal = UART_RP2040_TransferSync(&i, 1);
+      retVal = UART_RP2040_TransferSync((uint8 *)&i, 1);
       (void)MOCK_UART_PROCESS_TXFIFO();  
       TEST_ASSERT_EQUAL(E_OK, retVal);
       TEST_ASSERT_EQUAL(i, lastByteTransmitted);

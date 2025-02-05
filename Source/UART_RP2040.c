@@ -135,7 +135,6 @@ Std_ComErrorCode UART_RP2040_InitSync ( UART_RP2040_Config * config )
 Std_ComErrorCode UART_RP2040_TransferSync ( uint8 * dataBuffer , uint8 length)
 {
     Std_ComErrorCode retVal = E_COM_UNKNOWN;
-    uint8 timeout = 0xFF;
     uint8 i;
 
     if( (0 == length) || (NULL == dataBuffer) )
