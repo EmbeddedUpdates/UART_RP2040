@@ -2,10 +2,12 @@
  * 
 * @file "UART_RP2040.c"
 * @author Madrick3
-* @brief UART driver code for the UART peripheral on the RP2040. Acts as an OSI-L1 and OSI-L2 driver. The UART currently only 
+* @brief UART driver code for the UART peripheral on the RP2040. Acts as an OSI-L1 and OSI-L2 driver. 
+            The UART_RP2040 is currently only capable of transmitting, and only with UART0. Future 
+            adaptations are needed to add RX and add UARTx support.
 * 
-* @COMPONENT: TIMER_RP2040
-* @VERSION: 01.00.01 
+* @COMPONENT: UART_RP2040
+* @VERSION: 01.00.02
 */
 /************************************************************
   Version History
@@ -48,6 +50,7 @@
 /************************************************************
   LOCAL VARIABLES
 ************************************************************/
+/* NB: This can be moved to the tests.c file, the declaration in the scope of this module can be put in SFR.h */
 #if defined ( VIRTUAL_TARGET )
 const tRP2040_UART UART_Uninit = { 0 };
 #endif /* VIRTUAL_TARGET */
@@ -55,6 +58,19 @@ const tRP2040_UART UART_Uninit = { 0 };
 /************************************************************
   LOCAL FUNCTIONS
 ************************************************************/
+/**
+ * Transfers only 1-byte. More specifically, writes the byte to the UARTDR data register. If the FIFO is already full (i.e. the FR register reports it is full), reports E_BUSY instead.
+ * @param byte: uint8 data to transfer on the UART.
+ * @return 
+ *         0: 'E_COM_OK' if successfully stored the data in the Data register for transmission
+ *         2: 'E_COM_BUSY' if the FIFO is full and it is not possible to add the data to the FIFO.
+ *      0xFF: 'E_COM_UNKNOWN' in the case of early return. Default return value, but should be overwritten.
+ *
+ * @pre  UART is initialized
+ * @post Data is queued for transmission
+ * @invariant n/a
+ *
+ */
 static Std_ComErrorCode UART_RP2040_TransferByte ( uint8 byte )
 {
     Std_ComErrorCode retVal = E_COM_UNKNOWN;
@@ -90,6 +106,20 @@ static Std_ComErrorCode UART_RP2040_TransferByte ( uint8 byte )
 /************************************************************
   GLOBAL FUNCTIONS
 ************************************************************/
+/**
+ * Initializes the UART according to the UART_RP2040_Config structure. Initializes the UART Baudrate and Control registers
+ *  Prepares the UART for Transmissiona AND reception. Assumes that the clock path is already prepared for the UART peripheral.
+ * 
+ * @param config: initial config for the UART peripheral, including baudrate and clock configurations.
+ * @return 
+ *         0: 'E_COM_OK' if the initialization is successful
+ *         1: 'E_COM_NOT_OK' if the initialization is not successful, typically due to misconfigured configuration struct
+ *
+ * @pre  Clockpaths to UART are already initialized.
+ * @post n/a
+ * @invariant n/a
+ *
+ */
 Std_ComErrorCode UART_RP2040_InitSync ( UART_RP2040_Config * config )
 {
     Std_ComErrorCode retVal = E_COM_OK;
@@ -143,6 +173,23 @@ Std_ComErrorCode UART_RP2040_InitSync ( UART_RP2040_Config * config )
     return retVal;
 }
 
+/**
+ * Transmits data given to the UART peripheral hardware. Stores the data into the TxFifo. In the case that
+ *  Data can not fit in the TxFifo (i.e. because the TxFifos are not flushing in time), reports E_COM_BUSY.
+ * 
+ * @param databuffer: pointer to bytes to be transferred on the UART.
+ * @param length: number of bytes to transfer on UART from the buffer. UINT8 -> Maximum of 255 bytes to transfer.
+ * @return 
+ *         0: 'E_COM_OK' if the Transfer is successful
+ *         1: 'E_COM_NOT_OK' if the Transfer is not successful, typically due to unsupported input parameters
+ *         2: 'E_COM_BUSY' if the FIFO is full and it is not possible to add the data to the FIFO.
+ *      0xFF: 'E_COM_UNKNOWN' in the case of early return from subfunction. Default return value, but should be overwritten.
+ *
+ * @pre  UART is initialized.
+ * @post n/a
+ * @invariant n/a
+ *
+ */
 Std_ComErrorCode UART_RP2040_TransferSync ( uint8 * dataBuffer , uint8 length)
 {
     Std_ComErrorCode retVal = E_COM_UNKNOWN;
@@ -156,8 +203,10 @@ Std_ComErrorCode UART_RP2040_TransferSync ( uint8 * dataBuffer , uint8 length)
     /* No error has been detected so far - we can attempt transmission */
     for(i = 0; i < length; i++)
     {
+        /* if anyone byte transfer fails, we should abort the transfer */
         if((E_COM_UNKNOWN == retVal) || (E_COM_OK == retVal))
         {
+            /* retVal is reassigned through the subfunction. If it fails in the subfunction it fails here */
             retVal = UART_RP2040_TransferByte(dataBuffer[i]);
         }
     }
