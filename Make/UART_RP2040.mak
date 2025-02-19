@@ -3,6 +3,7 @@
 
 #C files that should be compiled in this component
 C_SOURCE_FILES += Components/UART_RP2040/Source/UART_RP2040.c
+C_SOURCE_FILES += Components/UART_RP2040/Source/UART_RP2040_cfg.c
 
 #Compiled Assembly that should be included in this component link
 #S_ASSEMBLY_FILES += $(COMPONENT_DIR)/Assembly/startup_cm0plus.s
